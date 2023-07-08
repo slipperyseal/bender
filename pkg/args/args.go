@@ -180,7 +180,7 @@ func (a *Args) LoadGlobalDefaults(filename string) {
 		// no defaults file
 		return
 	}
-	a.globals = string(bytes)
+	a.globals = strings.ReplaceAll(strings.ReplaceAll(string(bytes), "\n", " "), "\r", " ")
 }
 
 func (a *Args) PrintUsage() {
