@@ -50,6 +50,17 @@ You can use the `--executable` option to override it.
 
 `/Applications/Blender.app/Contents/MacOS/Blender`
 
+You can set up global defaults by creating a file called `.bender_defaults` in your home directory.
+This should contain a single line with the args which will get appended.
+
+Such as..
+
+```
+--target TargetDir --samples 512
+```
+
+These are not true defaults and doesn't yet support overrides. Coming soon.
+
 #### Setting up a profile
 
 This example template shows a 4K 2:1 aspect ratio configuration

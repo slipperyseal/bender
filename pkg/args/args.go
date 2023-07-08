@@ -13,6 +13,7 @@ type Args struct {
 	argSlice  []arg
 	program   string
 	tailLabel string
+	globals   string
 }
 
 type arg struct {
@@ -40,6 +41,8 @@ func (a *Args) Process(osargs []string, requireTail bool, tailLabel string, tail
 		argMap[fmt.Sprintf("-%c", arg.letter)] = arg
 		argMap["--"+arg.name] = arg
 	}
+
+	osargs = append(osargs, strings.Split(a.globals, " ")...)
 
 	queen := false
 	for i, osarg := range osargs {
@@ -169,6 +172,15 @@ func (a *Args) FailWith(error string) {
 		fmt.Printf("\n%s\n\n", error)
 	}
 	os.Exit(1)
+}
+
+func (a *Args) LoadGlobalDefaults(filename string) {
+	bytes, err := os.ReadFile(filename) // just pass the file name
+	if err != nil {
+		// no defaults file
+		return
+	}
+	a.globals = string(bytes)
 }
 
 func (a *Args) PrintUsage() {

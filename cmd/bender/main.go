@@ -4,6 +4,7 @@ import (
 	"catchpole.net/bender/pkg/args"
 	"catchpole.net/bender/pkg/bender"
 	"os"
+	"path"
 )
 
 func main() {
@@ -18,6 +19,8 @@ func main() {
 	a.IntArg('e', "end", "end frame.", 1, &o.End)
 	a.IntArg('l', "samples", "cycles samples count.", 64, &o.Samples)
 	a.StringArg('x', "executable", "", false, "blender executable.", nil, &o.Blender)
+	home, _ := os.UserHomeDir()
+	a.LoadGlobalDefaults(path.Join(home, ".bender_defaults"))
 	a.Process(os.Args, false, "", "")
 
 	bender.Bender(o)
