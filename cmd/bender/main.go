@@ -18,6 +18,7 @@ func main() {
 	a.IntArg('s', "start", "start frame.", 1, &o.Start)
 	a.IntArg('e', "end", "end frame.", 1, &o.End)
 	a.IntArg('l', "samples", "cycles samples count.", 64, &o.Samples)
+	a.StringArg('c', "camera", "", false, "Camera name", nil, &o.Camera)
 	a.StringArg('x', "executable", "", false, "blender executable.", nil, &o.Blender)
 	home, _ := os.UserHomeDir()
 	a.LoadGlobalDefaults(path.Join(home, ".bender_defaults"))

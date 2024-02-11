@@ -20,6 +20,7 @@ type Options struct {
 	Start   int
 	End     int
 	Samples int
+	Camera  string
 }
 
 type Paths struct {
@@ -132,10 +133,11 @@ func processLine(line string, o Options) {
 }
 
 func createProfile(profile string, paths Paths, o Options) {
-	profile = strings.ReplaceAll(profile, "{outpath}", "\""+paths.outputPatternPath+"\"")
+	profile = strings.ReplaceAll(profile, "{outpath}", paths.outputPatternPath)
 	profile = strings.ReplaceAll(profile, "{samples}", strconv.Itoa(o.Samples))
 	profile = strings.ReplaceAll(profile, "{start}", strconv.Itoa(o.Start))
 	profile = strings.ReplaceAll(profile, "{end}", strconv.Itoa(o.End))
+	profile = strings.ReplaceAll(profile, "{camera}", o.Camera)
 
 	f, err := os.Create(paths.jobProfile)
 	if err != nil {

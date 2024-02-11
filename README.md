@@ -42,6 +42,7 @@ Options:
     -s  --start      [number]      start frame. default [ 1 ]
     -e  --end        [number]      end frame. default [ 1 ]
     -l  --samples    [number]      cycles samples count. default [ 64 ]
+    -c  --camera     <camera>      Camera name
     -x  --executable <executable>  blender executable.
 ```
 
@@ -81,7 +82,7 @@ for scene in bpy.data.scenes:
     scene.frame_start = {start}
     scene.frame_end = {end}
     scene.frame_step = 1
-    scene.render.filepath = {outpath}
+    scene.render.filepath = "{outpath}"
     scene.render.resolution_x = 3840
     scene.render.resolution_y = 1920
     scene.render.resolution_percentage = 100
@@ -91,8 +92,12 @@ for scene in bpy.data.scenes:
     scene.render.use_border = False
     scene.render.image_settings.file_format = "OPEN_EXR"
     scene.render.image_settings.exr_codec = "ZIP" # NONE, PXR24, ZIP, PIZ, RLE, ZIPS, B44, B44A, DWAA, DWAB
-    scene.render.image_settings.color_depth = "16"
+    scene.render.image_settings.color_depth = "32"
     scene.render.image_settings.color_mode='RGB'
+
+camera_name = "{camera}"
+if camera_name:
+    bpy.context.scene.camera = bpy.context.scene.objects.get(camera_name)
 ```
 
 #### Example job
