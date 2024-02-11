@@ -9,7 +9,7 @@ for scene in bpy.data.scenes:
     scene.render.filepath = "{outpath}"
     scene.render.resolution_x = 3840
     scene.render.resolution_y = 1920
-    scene.render.resolution_percentage = 100
+    scene.render.resolution_percentage = {percent}
     scene.render.use_motion_blur = True
     scene.render.motion_blur_shutter = 0.5
     scene.render.use_overwrite = True

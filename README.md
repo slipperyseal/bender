@@ -42,7 +42,8 @@ Options:
     -s  --start      [number]      start frame. default [ 1 ]
     -e  --end        [number]      end frame. default [ 1 ]
     -l  --samples    [number]      cycles samples count. default [ 64 ]
-    -c  --camera     <camera>      Camera name
+    -r  --percent    [number]      resolution percent. default [ 100 ]
+    -c  --camera     <camera>      camera name.
     -x  --executable <executable>  blender executable.
 ```
 
@@ -85,7 +86,7 @@ for scene in bpy.data.scenes:
     scene.render.filepath = "{outpath}"
     scene.render.resolution_x = 3840
     scene.render.resolution_y = 1920
-    scene.render.resolution_percentage = 100
+    scene.render.resolution_percentage = {percent}
     scene.render.use_motion_blur = True
     scene.render.motion_blur_shutter = 0.5
     scene.render.use_overwrite = True

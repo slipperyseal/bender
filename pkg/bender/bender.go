@@ -20,6 +20,7 @@ type Options struct {
 	Start   int
 	End     int
 	Samples int
+	Percent int
 	Camera  string
 }
 
@@ -137,6 +138,7 @@ func createProfile(profile string, paths Paths, o Options) {
 	profile = strings.ReplaceAll(profile, "{samples}", strconv.Itoa(o.Samples))
 	profile = strings.ReplaceAll(profile, "{start}", strconv.Itoa(o.Start))
 	profile = strings.ReplaceAll(profile, "{end}", strconv.Itoa(o.End))
+	profile = strings.ReplaceAll(profile, "{percent}", strconv.Itoa(o.Percent))
 	profile = strings.ReplaceAll(profile, "{camera}", o.Camera)
 
 	f, err := os.Create(paths.jobProfile)
@@ -153,13 +155,13 @@ func createProfile(profile string, paths Paths, o Options) {
 func printScreen(r RenderUpdate, o Options) {
 	fmt.Printf("\033[2J\033[H\r\n\033[0;32m"+
 		"Bender\033[0m\r\n\r\n"+
-		"\033[7m%10s\033[0m"+
+		"\033[7m%16s\033[0m"+
 		"\033[0;32m\033[7m%6s\033[0m"+
 		"\033[0;36m\033[7m%6s\033[0m"+
 		"\033[0;33m\033[7m%6s\033[0m"+
-		"\033[0;33m\033[7m%10s\033[0m"+
+		"\033[0;32m\033[7m%10s\033[0m"+
 		"\033[7m%10s\033[0m\n",
 		"job", "start", "end", "frame", "time", "remaining")
-	fmt.Printf("%10s%6d%6d%6d%10s%10s\n\n%48s\n\n",
+	fmt.Printf("%16s%6d%6d%6d%10s%10s\n\n%48s\n\n",
 		o.Job, o.Start, o.End, r.Frame, r.Time, r.Remaining, r.Sample)
 }
