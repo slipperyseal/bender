@@ -113,11 +113,11 @@ create the frames in that directory.
 jobs/
     pants/
          pants.py
-         pants0001.exr
-         pants0002.exr
-         pants0003.exr
-         pants0004.exr
-         pants0005.exr
+         pants_0001.exr
+         pants_0002.exr
+         pants_0003.exr
+         pants_0004.exr
+         pants_0005.exr
 ```
 
 If a job gets interrupted, Bender recovers from the last frame rendered.
