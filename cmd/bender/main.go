@@ -15,6 +15,7 @@ func main() {
 	a.StringArg('p', "profile", "", true, "profile python file.", nil, &o.Profile)
 	a.StringArg('b', "blend", "", true, "blend file.", nil, &o.Blend)
 	a.StringArg('t', "target", "", true, "target directory.", nil, &o.Target)
+	a.BoolArg('o', "overwrite", "don't skip existing files.", &o.Overwrite, false)
 	a.IntArg('s', "start", "start frame.", 1, &o.Start)
 	a.IntArg('e', "end", "end frame.", 1, &o.End)
 	a.IntArg('l', "samples", "cycles samples count.", 64, &o.Samples)

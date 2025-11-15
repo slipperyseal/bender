@@ -12,16 +12,17 @@ import (
 )
 
 type Options struct {
-	Blend   string
-	Job     string
-	Profile string
-	Target  string
-	Blender string
-	Start   int
-	End     int
-	Samples int
-	Percent int
-	Camera  string
+	Blend     string
+	Job       string
+	Profile   string
+	Target    string
+	Overwrite bool
+	Blender   string
+	Start     int
+	End       int
+	Samples   int
+	Percent   int
+	Camera    string
 }
 
 type Paths struct {
@@ -37,15 +38,19 @@ type RenderUpdate struct {
 	Remaining string
 }
 
+var currentFrame int
+
 func Bender(o Options) {
 	if o.Blender == "" {
 		o.Blender = "/Applications/Blender.app/Contents/MacOS/Blender"
 	}
 	paths := setupPaths(o.Job, o.Target)
-	o.Start = skipFrames(paths.jobDir, o.Job, o.Start)
+	o.Start = skipFrames(paths.jobDir, o.Job, o.Start, o.Overwrite)
 	if o.Start > o.End {
 		log.Fatalln("No frames left to render")
 	}
+	currentFrame = o.Start
+	
 	profileBytes, err := os.ReadFile(o.Profile)
 	if err != nil {
 		log.Fatalf("Unable to read %s - %s\n", o.Profile, err)
@@ -68,13 +73,13 @@ func setupPaths(job string, dirname string) Paths {
 	return Paths{
 		jobDir:            jobDir,
 		jobProfile:        filepath.Join(jobDir, job+".py"),
-		outputPatternPath: filepath.Join(jobDir, job+"####"),
+		outputPatternPath: filepath.Join(jobDir, job+"_####"),
 	}
 }
 
 func frameExists(entries []os.DirEntry, job string, num int) bool {
 	// we don't know the file extension so match on "example0001."
-	match := fmt.Sprintf("%s%04d.", job, num)
+	match := fmt.Sprintf("%s_%04d.", job, num)
 	for _, e := range entries {
 		if !e.IsDir() && strings.HasPrefix(e.Name(), match) {
 			return true
@@ -83,7 +88,10 @@ func frameExists(entries []os.DirEntry, job string, num int) bool {
 	return false
 }
 
-func skipFrames(jobDir string, job string, num int) int {
+func skipFrames(jobDir string, job string, num int, overwrite bool) int {
+	if overwrite {
+		return num
+	}
 	entries, err := os.ReadDir(jobDir)
 	if err != nil {
 		log.Fatal(err)
@@ -115,22 +123,50 @@ func startBlender(o Options, jobProfile string) {
 	}
 }
 
+// Blender 4 log format
 // Fra:1 Mem:2845.68M (Peak 2845.69M) | Time:00:14.42 | Remaining:03:01.65 | Mem:4360.26M, Peak:4360.26M | Scene, View Layer | Sample 17/256
+
+// Blender 5 log format
+// 00:04.845  render           | Mem: 1614M | Sample 0/512 (Using optimized kernels)
+// 00:34.042  render           | Remaining: 07:03.80 | Mem: 2007M | Sample 33/512 (Using optimized kernels)
 func processLine(line string, o Options) {
-	if strings.HasPrefix(line, "Fra:") {
-		f, _ := strconv.Atoi(strings.TrimPrefix(strings.Split(line, " ")[0], "Fra:"))
-		line = strings.ReplaceAll(line, " ", "")
-		cols := strings.Split(line, "|")
-		if len(cols) == 6 {
-			printScreen(
-				RenderUpdate{
-					Frame:     f,
-					Sample:    strings.TrimPrefix(cols[5], "Sample"),
-					Time:      strings.TrimPrefix(cols[1], "Time:"),
-					Remaining: strings.TrimPrefix(cols[2], "Remaining:"),
-				}, o)
-		}
+	cols := strings.Split(line, "|")
+	for i := range cols {
+	    cols[i] = strings.TrimSpace(cols[i])
 	}
+
+	var update RenderUpdate
+	var sample string
+
+	if len(cols) == 3 {
+		sample = cols[2]
+		if strings.HasPrefix(sample, "Finished") {
+			currentFrame++
+			return
+		}
+	} else if len(cols) == 4 {
+		update.Remaining = first(strings.TrimPrefix(cols[1], "Remaining: "), '.')
+		sample = cols[3]
+	} else {
+		return
+	}
+
+	if !strings.HasPrefix(sample, "Sample ") {
+		return
+	}
+
+	update.Frame = currentFrame
+	update.Sample = first(strings.TrimPrefix(sample, "Sample "),' ')
+	update.Time = first(first(cols[0], ' '), '.')
+
+	printScreen(update, o)
+}
+
+func first(str string, sep byte) string {
+    if i := strings.IndexByte(str, sep); i >= 0 {
+        return str[:i]
+    }
+    return str
 }
 
 func createProfile(profile string, paths Paths, o Options) {
@@ -156,12 +192,13 @@ func printScreen(r RenderUpdate, o Options) {
 	fmt.Printf("\033[2J\033[H\r\n\033[0;32m"+
 		"Bender\033[0m\r\n\r\n"+
 		"\033[7m%16s\033[0m"+
-		"\033[0;32m\033[7m%6s\033[0m"+
-		"\033[0;36m\033[7m%6s\033[0m"+
-		"\033[0;33m\033[7m%6s\033[0m"+
-		"\033[0;32m\033[7m%10s\033[0m"+
-		"\033[7m%10s\033[0m\n",
-		"job", "start", "end", "frame", "time", "remaining")
-	fmt.Printf("%16s%6d%6d%6d%10s%10s\n\n%48s\n\n",
-		o.Job, o.Start, o.End, r.Frame, r.Time, r.Remaining, r.Sample)
+		"\033[0;32m\033[7m%8s\033[0m"+
+		"\033[0;36m\033[7m%8s\033[0m"+
+		"\033[0;33m\033[7m%8s\033[0m"+
+		"\033[0;32m\033[7m%12s\033[0m"+
+		"\033[0;33m\033[7m%12s\033[0m"+
+		"\033[7m%12s\033[0m\n",
+		"job", "start", "frame", "end", "sample", "time", "remaining")
+	fmt.Printf("%16s%8d%8d%8d%12s%12s%12s\n\n",
+		o.Job, o.Start, r.Frame, o.End, r.Sample, r.Time, r.Remaining)
 }
