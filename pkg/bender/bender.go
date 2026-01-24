@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type Options struct {
@@ -39,6 +40,9 @@ type RenderUpdate struct {
 }
 
 var currentFrame int
+var startTime time.Time
+var eta string
+var endTime string
 
 func Bender(o Options) {
 	if o.Blender == "" {
@@ -57,6 +61,7 @@ func Bender(o Options) {
 	}
 	createProfile(string(profileBytes), paths, o)
 	fmt.Printf("Starting blender for %s\n", o.Job)
+	startTime = time.Now()
 	startBlender(o, paths.jobProfile)
 	fmt.Printf("Job complete: %s\n", o.Job)
 }
@@ -127,8 +132,8 @@ func startBlender(o Options, jobProfile string) {
 // Fra:1 Mem:2845.68M (Peak 2845.69M) | Time:00:14.42 | Remaining:03:01.65 | Mem:4360.26M, Peak:4360.26M | Scene, View Layer | Sample 17/256
 
 // Blender 5 log format
-// 00:04.845  render           | Mem: 1614M | Sample 0/512 (Using optimized kernels)
-// 00:34.042  render           | Remaining: 07:03.80 | Mem: 2007M | Sample 33/512 (Using optimized kernels)
+// 00:04.882  render           | Fra: 327 | Mem: 4294M | Sample 0/128 (Using optimized kernels)
+// 00:05.259  render           | Fra: 327 | Remaining: 00:47.97 | Mem: 4322M | Sample 1/128 (Using optimized kernels
 func processLine(line string, o Options) {
 	cols := strings.Split(line, "|")
 	for i := range cols {
@@ -138,15 +143,26 @@ func processLine(line string, o Options) {
 	var update RenderUpdate
 	var sample string
 
-	if len(cols) == 3 {
-		sample = cols[2]
+	if len(cols) == 4 {
+		sample = cols[3]
 		if strings.HasPrefix(sample, "Finished") {
 			currentFrame++
+			
+			elapsed := time.Since(startTime)
+			done := currentFrame-o.Start
+		    avgPerFrame := elapsed / time.Duration(done)
+		    remainingFrames := o.End-currentFrame
+		    remaining := avgPerFrame * time.Duration(remainingFrames)
+
+			minutesRemaining := strings.TrimPrefix(fmt.Sprintf("%02d:%02dm", int(remaining.Hours()), int(remaining.Minutes()) % 60), "00:")
+		    
+		    eta = "" + minutesRemaining
+			endTime = time.Now().Add(remaining).Format(time.RFC3339)
 			return
 		}
-	} else if len(cols) == 4 {
-		update.Remaining = first(strings.TrimPrefix(cols[1], "Remaining: "), '.')
-		sample = cols[3]
+	} else if len(cols) == 5 {
+		update.Remaining = first(strings.TrimPrefix(cols[2], "Remaining: "), '.')
+		sample = cols[4]
 	} else {
 		return
 	}
@@ -157,7 +173,7 @@ func processLine(line string, o Options) {
 
 	update.Frame = currentFrame
 	update.Sample = first(strings.TrimPrefix(sample, "Sample "),' ')
-	update.Time = first(first(cols[0], ' '), '.')
+	update.Time = first(first(cols[0], ' '), '.') + "s"
 
 	printScreen(update, o)
 }
@@ -197,8 +213,9 @@ func printScreen(r RenderUpdate, o Options) {
 		"\033[0;33m\033[7m%8s\033[0m"+
 		"\033[0;32m\033[7m%12s\033[0m"+
 		"\033[0;33m\033[7m%12s\033[0m"+
+		"\033[0;32m\033[7m%12s\033[0m"+
 		"\033[7m%12s\033[0m\n",
-		"job", "start", "frame", "end", "sample", "time", "remaining")
-	fmt.Printf("%16s%8d%8d%8d%12s%12s%12s\n\n",
-		o.Job, o.Start, r.Frame, o.End, r.Sample, r.Time, r.Remaining)
+		"job", "start", "frame", "end", "sample", "time", "frame ETA", "job ETA")
+	fmt.Printf("%16s%8d%8d%8d%12s%12s%12s%12s\n\nETA time: %s\n",
+		o.Job, o.Start, r.Frame, o.End, r.Sample, r.Time, r.Remaining, eta, endTime)
 }
