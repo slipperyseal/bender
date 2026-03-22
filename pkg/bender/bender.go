@@ -157,9 +157,8 @@ func processLine(line string, o Options) {
 	        days := remaining / (24 * time.Hour)
 	        hours := (remaining % (24 * time.Hour)) / time.Hour
 	        minutes := (remaining % time.Hour) / time.Minute
-			remaining := fmt.Sprintf("%dd %dh %02dm", days, hours, minutes)
+			eta = fmt.Sprintf("%dd %dh %02dm", days, hours, minutes)
 		    
-		    eta = "" + remaining
 			endTime = time.Now().Add(remaining).Format(time.RFC3339)
 			return
 		}
