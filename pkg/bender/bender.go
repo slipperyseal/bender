@@ -154,9 +154,12 @@ func processLine(line string, o Options) {
 		    remainingFrames := o.End-currentFrame
 		    remaining := avgPerFrame * time.Duration(remainingFrames)
 
-			minutesRemaining := strings.TrimPrefix(fmt.Sprintf("%02d:%02dm", int(remaining.Hours()), int(remaining.Minutes()) % 60), "00:")
+	        days := remaining / (24 * time.Hour)
+	        hours := (remaining % (24 * time.Hour)) / time.Hour
+	        minutes := (remaining % time.Hour) / time.Minute
+			remaining := fmt.Sprintf("%dd %dh %02dm", days, hours, minutes)
 		    
-		    eta = "" + minutesRemaining
+		    eta = "" + remaining
 			endTime = time.Now().Add(remaining).Format(time.RFC3339)
 			return
 		}
