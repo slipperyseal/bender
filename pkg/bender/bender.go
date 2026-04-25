@@ -49,7 +49,13 @@ func Bender(o Options) {
 		o.Blender = "/Applications/Blender.app/Contents/MacOS/Blender"
 	}
 	paths := setupPaths(o.Job, o.Target)
-	o.Start = skipFrames(paths.jobDir, o.Job, o.Start, o.Overwrite)
+
+    blendInfo, e := os.Stat(o.Blend)
+	if e != nil {
+		log.Fatalf("Unable to read %s - %s\n", o.Blend, e)
+	}
+
+	o.Start = skipFrames(blendInfo, paths.jobDir, o.Job, o.Start, o.Overwrite)
 	if o.Start > o.End {
 		log.Fatalln("No frames left to render")
 	}
@@ -82,18 +88,21 @@ func setupPaths(job string, dirname string) Paths {
 	}
 }
 
-func frameExists(entries []os.DirEntry, job string, num int) bool {
+func frameExists(blendInfo os.FileInfo, entries []os.DirEntry, job string, num int) bool {
 	// we don't know the file extension so match on "example0001."
 	match := fmt.Sprintf("%s_%04d.", job, num)
 	for _, e := range entries {
 		if !e.IsDir() && strings.HasPrefix(e.Name(), match) {
-			return true
+		    info, _ := e.Info()
+		    if (!blendInfo.ModTime().After(info.ModTime())) {
+    			return true
+		    }
 		}
 	}
 	return false
 }
 
-func skipFrames(jobDir string, job string, num int, overwrite bool) int {
+func skipFrames(blendInfo os.FileInfo, jobDir string, job string, num int, overwrite bool) int {
 	if overwrite {
 		return num
 	}
@@ -101,7 +110,7 @@ func skipFrames(jobDir string, job string, num int, overwrite bool) int {
 	if err != nil {
 		log.Fatal(err)
 	}
-	for frameExists(entries, job, num) {
+	for frameExists(blendInfo, entries, job, num) {
 		num++
 	}
 	return num

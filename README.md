@@ -31,6 +31,7 @@ Bender is written on `go`
   `./bender`
 
 ```
+
 Usage:
     bender [options] 
 
@@ -39,6 +40,7 @@ Options:
     -p  --profile    <profile>     profile python file. (required)
     -b  --blend      <blend>       blend file. (required)
     -t  --target     <target>      target directory. (required)
+    -o  --overwrite                don't skip existing older files.
     -s  --start      [number]      start frame. default [ 1 ]
     -e  --end        [number]      end frame. default [ 1 ]
     -l  --samples    [number]      cycles samples count. default [ 64 ]
@@ -121,8 +123,10 @@ jobs/
 ```
 
 If a job gets interrupted, Bender recovers from the last frame rendered.
-If a job is complete Bender will do nothing. If you need to re-start a job
-simply delete off the output files and start again. 
+But bender also takes into account the modified time of the blend file,
+ensuring changes are re-rendered.
+If a job is complete Bender will do nothing.
+The overwrite option ensures overwrites always occur.
 
 ![progress](https://github.com/slipperyseal/bender/blob/main/doc/progress.png "progress")
 
