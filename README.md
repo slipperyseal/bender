@@ -134,3 +134,7 @@ Bender parses the log output of Blender and attempts to produce a nice
 updating summary in your terminal.  It's a bit flakey, and may break as Blender
 changes. But it's easier to read than Blender logs.
 
+#### Simple Scheduling
+
+You can run multiple bender commands which will wait on a common lock.
+Only one bender render runs at a time. Each bender command waits for it's turn to run.

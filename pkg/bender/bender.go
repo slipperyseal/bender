@@ -10,6 +10,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"golang.org/x/sys/unix"
 )
 
 type Options struct {
@@ -66,6 +68,18 @@ func Bender(o Options) {
 		log.Fatalf("Unable to read %s - %s\n", o.Profile, err)
 	}
 	createProfile(string(profileBytes), paths, o)
+
+    fmt.Printf("Acquiring nessiesary loch.. ")
+    f, err := os.OpenFile("/tmp/bender.lock", os.O_CREATE|os.O_RDWR, 0666)
+    if err != nil {
+        log.Fatal(err)
+    }
+    defer f.Close()
+    if err := unix.Flock(int(f.Fd()), unix.LOCK_EX); err != nil {
+        log.Fatal(err)
+    }
+    fmt.Printf("PUN COMPLETE\n")
+
 	fmt.Printf("Starting blender for %s\n", o.Job)
 	startTime = time.Now()
 	startBlender(o, paths.jobProfile)
