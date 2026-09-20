@@ -69,7 +69,7 @@ func Bender(o Options) {
 	}
 	createProfile(string(profileBytes), paths, o)
 
-    fmt.Printf("Acquiring nessiesary loch.. ")
+    fmt.Printf("Aquaring nessiesary loch.. ")
     f, err := os.OpenFile("/tmp/bender.lock", os.O_CREATE|os.O_RDWR, 0666)
     if err != nil {
         log.Fatal(err)
